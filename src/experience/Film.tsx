@@ -26,7 +26,7 @@ function keyOf(src: string) {
 
 function whisperFor(src: string) {
   const key = keyOf(src) as keyof typeof gift.whispers
-  return gift.whispers[key] ?? { line: '', place: 'none' as const }
+  return gift.whispers[key] ?? { lead: '', line: '', place: 'none' as const }
 }
 
 function smooth(t: number) {
@@ -55,16 +55,16 @@ function buildBeats(photos: Photo[]): Beat[] {
       )
 
   const beats: Beat[] = [
-    { type: 'arrive', photo: 0, weight: 0.28 },
-    { type: 'hold', photo: 0, weight: 0.46 },
+    { type: 'arrive', photo: 0, weight: 0.3 },
+    { type: 'hold', photo: 0, weight: 0.86 },
   ]
 
   plan.forEach((trans, i) => {
     const from = i
     const to = i + 1
     if (to >= n) return
-    beats.push({ type: 'cut', from, to, trans, weight: trans === 'memory' ? 0.26 : 0.4 })
-    beats.push({ type: 'hold', photo: to, weight: 0.44 })
+    beats.push({ type: 'cut', from, to, trans, weight: 0.28 })
+    beats.push({ type: 'hold', photo: to, weight: whisperFor(photos[to].src).line ? 1.05 : 0.78 })
   })
 
   const walk = n - 2
@@ -72,8 +72,8 @@ function buildBeats(photos: Photo[]): Beat[] {
   if (walk >= 0 && last > walk) {
     const already = beats.some((beat) => beat.type === 'cut' && beat.to === last)
     if (!already) {
-      beats.push({ type: 'cut', from: walk, to: last, trans: 'soft', weight: 0.42 })
-      beats.push({ type: 'hold', photo: last, weight: 0.5 })
+      beats.push({ type: 'cut', from: walk, to: last, trans: 'soft', weight: 0.3 })
+      beats.push({ type: 'hold', photo: last, weight: 0.82 })
     }
   }
 
@@ -91,94 +91,31 @@ function paintCut(
   wrapA: HTMLDivElement,
   wrapB: HTMLDivElement,
   wash: HTMLDivElement | null,
-  trans: Trans,
+  _trans: Trans,
   mix: number,
-  velocity: number,
-  lookX: number,
-  lookY: number,
 ) {
   const k = smooth(mix)
-  const smear = Math.min(6, velocity * 80)
-  const look = lookShift(lookX, lookY)
   wrapA.style.clipPath = 'none'
   wrapB.style.clipPath = 'none'
-  if (wash) wash.style.opacity = '0'
-
-  if (trans === 'turn') {
-    wrapA.style.opacity = String(1 - k)
-    wrapA.style.filter = `brightness(${1 - k * 0.28}) saturate(${1 - k * 0.12})`
-    wrapA.style.transform = `scale(${1 + k * 0.07}) translate3d(${smear * 0.15}px, ${k * -8}px, 0) ${look}`
-    wrapB.style.opacity = String(Math.max(0, (k - 0.08) / 0.92))
-    wrapB.style.clipPath = `circle(${6 + k * 132}% at 40% 30%)`
-    wrapB.style.filter = k < 0.55 ? `brightness(${0.72 + k * 0.5})` : 'none'
-    wrapB.style.transform = `scale(${1.08 - k * 0.08}) ${look}`
-    if (wash) {
-      wash.style.opacity = String(Math.sin(k * Math.PI) * 0.22)
-      wash.style.background = `radial-gradient(ellipse at ${40 + lookX * 8}% ${28 + lookY * 6}%, rgba(247,241,232,${0.16 + k * 0.1}), transparent 52%)`
-    }
-    return
-  }
-
-  if (trans === 'memory') {
-    wrapA.style.opacity = String(1 - k)
-    wrapA.style.transform = `scale(${1 + k * 0.08}) ${look}`
-    wrapB.style.opacity = String(k)
-    wrapB.style.transform = `scale(${1.1 - k * 0.1}) ${look}`
-    wrapB.style.filter = k < 0.5 ? `blur(${(1 - k / 0.5) * 7}px)` : 'none'
-    if (wash) {
-      wash.style.opacity = String(Math.sin(k * Math.PI) * 0.18)
-      wash.style.background = 'radial-gradient(ellipse at 50% 42%, rgba(201,165,106,0.16), transparent 58%)'
-    }
-    return
-  }
-
-  if (trans === 'light') {
-    wrapA.style.opacity = String(1 - k * 0.94)
-    wrapA.style.filter = `brightness(${1 + k * 0.42})`
-    wrapA.style.transform = `scale(${1 + k * 0.03}) ${look}`
-    wrapB.style.opacity = String(Math.max(0, (k - 0.06) / 0.94))
-    wrapB.style.clipPath = `circle(${8 + k * 130}% at 50% 26%)`
-    wrapB.style.transform = `scale(${1.06 - k * 0.06}) ${look}`
-    if (wash) {
-      const sweep = k * 120 + lookX * 8
-      wash.style.opacity = String(Math.sin(k * Math.PI) * 0.32)
-      wash.style.background = `linear-gradient(112deg, transparent ${sweep - 18}%, rgba(255,236,210,0.2) ${sweep}%, transparent ${sweep + 22}%)`
-    }
-    return
-  }
-
-  if (trans === 'depth') {
-    wrapA.style.opacity = String(1 - k)
-    wrapA.style.filter = `blur(${k * 4}px) brightness(${1 - k * 0.18})`
-    wrapA.style.transform = `scale(${1 + k * 0.1}) translate3d(${smear * 0.2}px, ${k * -12}px, 0) ${look}`
-    wrapB.style.opacity = String(k)
-    wrapB.style.transform = `scale(${1.12 - k * 0.12}) translate3d(0, ${(1 - k) * 18}px, 0) ${look}`
-    wrapB.style.filter = k < 0.4 ? `brightness(${0.78 + k * 0.55})` : 'none'
-    if (wash) {
-      wash.style.opacity = String(Math.sin(k * Math.PI) * 0.14)
-      wash.style.background = 'linear-gradient(180deg, rgba(12,10,9,0.2), transparent 40%, rgba(12,10,9,0.28))'
-    }
-    return
-  }
-
+  wrapA.style.filter = 'none'
+  wrapB.style.filter = 'none'
   wrapA.style.opacity = String(1 - k)
-  wrapA.style.filter = `blur(${k * 3}px)`
-  wrapA.style.transform = look
   wrapB.style.opacity = String(k)
-  wrapB.style.transform = `scale(${1.06 - k * 0.06}) ${look}`
-}
-
-function lookShift(_x: number, _y: number) {
-  return ''
+  wrapA.style.transform = `scale(${1 + k * 0.012})`
+  wrapB.style.transform = `scale(${1.016 - k * 0.016})`
+  if (wash) {
+    wash.style.opacity = String(Math.sin(k * Math.PI) * 0.06)
+    wash.style.background = 'rgba(12, 10, 9, 0.18)'
+  }
 }
 
 function paintArrive(wrapA: HTMLDivElement, wrapB: HTMLDivElement, mix: number) {
   const ease = smooth(mix)
-  wrapA.style.opacity = '1'
+  wrapA.style.opacity = String(0.2 + ease * 0.8)
   wrapB.style.opacity = '0'
-  wrapA.style.clipPath = `circle(${8 + ease * 142}% at 50% 38%)`
-  wrapA.style.filter = `brightness(${0.52 + ease * 0.48}) saturate(${0.8 + ease * 0.2})`
-  wrapA.style.transform = `scale(${1.06 - ease * 0.06})`
+  wrapA.style.clipPath = 'none'
+  wrapA.style.filter = `brightness(${0.88 + ease * 0.12})`
+  wrapA.style.transform = `scale(${1.02 - ease * 0.02})`
 }
 
 export function Film({ photos, reducedMotion, onOpen }: Props) {
@@ -187,6 +124,8 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
   const bWrap = useRef<HTMLDivElement>(null)
   const bleed = useRef<HTMLDivElement>(null)
   const lineRef = useRef<HTMLParagraphElement>(null)
+  const leadRef = useRef<HTMLSpanElement>(null)
+  const wordRef = useRef<HTMLSpanElement>(null)
   const indexRef = useRef(0)
   const [pair, setPair] = useState([0, Math.min(1, Math.max(0, photos.length - 1))])
 
@@ -196,17 +135,17 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
     const wrapB = bWrap.current
     const wash = bleed.current
     const line = lineRef.current
+    const lead = leadRef.current
+    const word = wordRef.current
     if (!rootEl || !wrapA || !wrapB || photos.length === 0) return
 
     const beats = buildBeats(photos)
     const sum = beats.reduce((total, beat) => total + beat.weight, 0)
     let lastPair = ''
-    let lastProgress = 0
     let lookX = 0
     let lookY = 0
     let lookTX = 0
     let lookTY = 0
-    let velocity = 0
     let raf = 0
     let holdShown = 0
     let holding = false
@@ -215,12 +154,12 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
     const paintWhisper = () => {
       if (!line) return
       const copy = whisperFor(photos[holdShown].src)
-      if (line.textContent !== copy.line) line.textContent = copy.line
+      if (lead && lead.textContent !== copy.lead) lead.textContent = copy.lead
+      if (word && word.textContent !== copy.line) word.textContent = copy.line
       line.className = `film-whisper is-${copy.place || 'none'}`
       const waited = performance.now() - holdSince
-      const ready = holding && Boolean(copy.line) && waited > 260
+      const ready = holding && Boolean(copy.line) && waited > 180
       line.classList.toggle('is-on', ready)
-      line.style.opacity = ''
     }
 
     if (reducedMotion) {
@@ -231,13 +170,11 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
     const trigger = ScrollTrigger.create({
       trigger: rootEl,
       start: 'top top',
-      end: () => `+=${Math.round(window.innerHeight * Math.max(2.2, sum * 0.78))}`,
+      end: () => `+=${Math.round(window.innerHeight * Math.max(2.8, sum))}`,
       pin: true,
-      scrub: 0.85,
+      scrub: 1.15,
       anticipatePin: 1,
       onUpdate: (self) => {
-        velocity = Math.min(1.4, Math.abs(self.progress - lastProgress) * 48)
-        lastProgress = self.progress
         let acc = 0
         let beat = beats[0]
         let mix = 0
@@ -277,13 +214,13 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
           wrapB.style.opacity = '0'
           wrapA.style.clipPath = 'none'
           wrapA.style.filter = 'none'
-          wrapA.style.transform = `scale(${1 + velocity * 0.003})`
+          wrapA.style.transform = 'none'
           if (wash) {
             wash.style.opacity = String(0.08 + Math.hypot(lookX, lookY) * 0.12)
             wash.style.background = `radial-gradient(ellipse at ${50 + lookX * 18}% ${42 + lookY * 14}%, rgba(247,241,232,0.14), transparent 46%)`
           }
         } else {
-          paintCut(wrapA, wrapB, wash, beat.trans, mix, velocity, lookX, lookY)
+          paintCut(wrapA, wrapB, wash, beat.trans, mix)
         }
 
         paintWhisper()
@@ -346,7 +283,10 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
         </div>
         <div className="film-bleed" ref={bleed} aria-hidden="true" />
         <div className="film-veil" />
-        <p className="film-whisper is-none" ref={lineRef} />
+        <p className="film-whisper is-none" ref={lineRef}>
+          <span className="film-whisper-lead" ref={leadRef} />
+          <span className="film-whisper-line" ref={wordRef} />
+        </p>
         <button
           type="button"
           className="film-open"

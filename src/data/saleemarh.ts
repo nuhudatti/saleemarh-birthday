@@ -35,11 +35,11 @@ export const gift = {
   sign: 'Datti',
   photoNotes: ['Her', 'This light', 'This smile', 'This day', 'This feeling', 'This year'],
   whispers: {
-    '02': { line: '', place: 'none' },
-    '03': { line: 'In her own time.', place: 'grass' },
-    '03.1': { line: '', place: 'none' },
-    '04': { line: 'There she is.', place: 'shadow' },
-    '05': { line: 'Keep up.', place: 'path' },
-    '06': { line: '', place: 'none' },
+    '02': { lead: '', line: '', place: 'none' },
+    '03': { lead: 'In her', line: 'own time.', place: 'grass' },
+    '03.1': { lead: '', line: '', place: 'none' },
+    '04': { lead: 'There', line: 'she is.', place: 'shadow' },
+    '05': { lead: 'Keep', line: 'up.', place: 'path' },
+    '06': { lead: '', line: '', place: 'none' },
   } as const,
 } as const
