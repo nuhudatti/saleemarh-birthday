@@ -238,13 +238,41 @@ export function Arrival({ photo, beginSrc, open, onBegin }: Props) {
   useEffect(() => {
     const node = beginFilm.current
     if (!node || !beginSrc) return
+
+    node.defaultMuted = true
     node.muted = true
     node.playsInline = true
-    const play = () => node.play().catch(() => undefined)
-    if (node.readyState >= 2) void play()
-    else node.addEventListener('canplay', play, { once: true })
-    return () => node.removeEventListener('canplay', play)
-  }, [beginSrc, phase])
+    node.setAttribute('muted', '')
+    node.setAttribute('playsinline', '')
+    node.setAttribute('webkit-playsinline', 'true')
+    node.setAttribute('autoplay', '')
+
+    const play = () => {
+      if (node.paused) void node.play().catch(() => undefined)
+    }
+
+    play()
+    node.addEventListener('loadedmetadata', play)
+    node.addEventListener('loadeddata', play)
+    node.addEventListener('canplay', play)
+    node.addEventListener('canplaythrough', play)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') play()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    const retry = window.setInterval(play, 400)
+    const stop = window.setTimeout(() => window.clearInterval(retry), 8000)
+
+    return () => {
+      node.removeEventListener('loadedmetadata', play)
+      node.removeEventListener('loadeddata', play)
+      node.removeEventListener('canplay', play)
+      node.removeEventListener('canplaythrough', play)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.clearInterval(retry)
+      window.clearTimeout(stop)
+    }
+  }, [beginSrc])
 
   useEffect(() => {
     if (!art) return
@@ -286,12 +314,9 @@ export function Arrival({ photo, beginSrc, open, onBegin }: Props) {
       aria-busy={phase === 'boot'}
       onPointerDown={() => {
         const node = beginFilm.current
-        if (!node) return
-        node.muted = false
-        void node.play().catch(() => {
-          node.muted = true
-          void node.play().catch(() => undefined)
-        })
+        if (!node || !node.paused) return
+        node.muted = true
+        void node.play().catch(() => undefined)
       }}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
@@ -317,6 +342,8 @@ export function Arrival({ photo, beginSrc, open, onBegin }: Props) {
           muted
           preload="auto"
           autoPlay
+          disablePictureInPicture
+          disableRemotePlayback
           aria-hidden="true"
         />
       ) : (
