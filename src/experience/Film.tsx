@@ -64,7 +64,7 @@ function buildBeats(photos: Photo[]): Beat[] {
     const to = i + 1
     if (to >= n) return
     beats.push({ type: 'cut', from, to, trans, weight: 0.28 })
-    beats.push({ type: 'hold', photo: to, weight: whisperFor(photos[to].src).line ? 1.05 : 0.78 })
+    beats.push({ type: 'hold', photo: to, weight: whisperFor(photos[to].src).line ? 1.28 : 0.78 })
   })
 
   const walk = n - 2
@@ -73,7 +73,7 @@ function buildBeats(photos: Photo[]): Beat[] {
     const already = beats.some((beat) => beat.type === 'cut' && beat.to === last)
     if (!already) {
       beats.push({ type: 'cut', from: walk, to: last, trans: 'soft', weight: 0.3 })
-      beats.push({ type: 'hold', photo: last, weight: 0.82 })
+      beats.push({ type: 'hold', photo: last, weight: whisperFor(photos[last].src).line ? 1.28 : 0.82 })
     }
   }
 
@@ -158,7 +158,7 @@ export function Film({ photos, reducedMotion, onOpen }: Props) {
       if (word && word.textContent !== copy.line) word.textContent = copy.line
       line.className = `film-whisper is-${copy.place || 'none'}`
       const waited = performance.now() - holdSince
-      const ready = holding && Boolean(copy.line) && waited > 180
+      const ready = holding && Boolean(copy.line) && waited > 120
       line.classList.toggle('is-on', ready)
     }
 

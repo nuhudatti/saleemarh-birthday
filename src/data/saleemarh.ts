@@ -40,6 +40,6 @@ export const gift = {
     '03.1': { lead: '', line: '', place: 'none' },
     '04': { lead: 'There', line: 'she is.', place: 'shadow' },
     '05': { lead: 'Keep', line: 'up.', place: 'path' },
-    '06': { lead: '', line: '', place: 'none' },
+    '06': { lead: 'This', line: 'day.', place: 'day' },
   } as const,
 } as const

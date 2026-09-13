@@ -156,7 +156,7 @@ function composeOpening(art: CakeArt, viewW: number, viewH: number): Frame {
   const w = art.width * scale
   const h = art.height * scale
   const x = (viewW - w) / 2
-  const y = Math.max(20, (viewH - shelf - h) * (mobile ? 0.3 : 0.36))
+  const y = Math.max(16, (viewH - shelf - h) * (mobile ? 0.2 : 0.36))
   return { x, y, w, h, viewW, viewH, buttonW, buttonH }
 }
 
